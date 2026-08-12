@@ -1,0 +1,31 @@
+{
+  "name": "scraper-jurisprudencia",
+  "version": "1.0.0",
+  "description": "Scraper en TypeScript para el Desafío de Scraping (jurisprudencia.pj.gob.pe / OEFA)",
+  "main": "dist/index.js",
+  "scripts": {
+    "scrape": "ts-node src/index.ts",
+    "scrape:oefa": "ts-node src/index.ts --site=oefa",
+    "scrape:pj": "ts-node src/index.ts --site=pj",
+    "retry-failed": "ts-node src/index.ts --retry-failed",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "scraper",
+    "typescript",
+    "jsf",
+    "primefaces"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "axios": "^1.19.0",
+    "cheerio": "^1.2.0"
+  }
+}

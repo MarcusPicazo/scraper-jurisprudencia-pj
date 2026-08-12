@@ -1,0 +1,22 @@
+node_modules/
+dist/
+
+# Datos generados por el scraper (pueden ser pesados / regenerables)
+data/pdfs/
+data/json/
+data/logs/
+
+# Mantener las carpetas en git aunque estén vacías
+!data/pdfs/.gitkeep
+!data/json/.gitkeep
+!data/logs/.gitkeep
+
+# Env / editor / OS
+.env
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+npm-debug.log*
+*.tsbuildinfo
