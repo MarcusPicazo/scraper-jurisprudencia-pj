@@ -1,5 +1,8 @@
-import { DEFAULT_SITE, SITES } from "./config";
+import fs from "fs";
+import path from "path";
+import { DEFAULT_SITE, PATHS, SITES } from "./config";
 import { Logger } from "./lib/logger";
+import { formatSanityReport, runSanityChecks } from "./lib/sanityChecks";
 import { downloadPdfs, ensureDirs, retryFailedDownloads, scrapeAllPages } from "./scraper";
 
 interface Cli {
@@ -65,7 +68,10 @@ async function main() {
     return;
   }
 
-  const { records, session, jsonPath } = await scrapeAllPages(opts, logger);
+  const { records, session, jsonPath, totalRecordsReported, partialRun } = await scrapeAllPages(
+    opts,
+    logger
+  );
   logger.info(`${records.length} documentos extraídos. Guardados en ${jsonPath}`);
 
   if (cli.downloadPdfs) {
@@ -77,6 +83,14 @@ async function main() {
   } else {
     logger.info("Descarga de PDFs omitida (--no-download-pdfs).");
   }
+
+  const pdfDir = path.join(PATHS.pdfDir, site.key);
+  const report = runSanityChecks(records, totalRecordsReported, partialRun, pdfDir);
+  logger.info("\n" + formatSanityReport(report));
+
+  const reportPath = path.join(PATHS.logDir, `sanity-check-${site.key}.json`);
+  fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf-8");
+  logger.info(`Reporte de sanity checks guardado en ${reportPath}`);
 }
 
 main().catch((err) => {
