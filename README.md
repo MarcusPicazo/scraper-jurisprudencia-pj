@@ -65,6 +65,7 @@ src/
     jsfSession.ts        Sesión con estado: search(), goToPage(), downloadRow()
     retry.ts             Backoff exponencial ante 429 (respeta Retry-After si viene)
     pdfNaming.ts          Nombre de archivo descriptivo a partir de las columnas
+    sanityChecks.ts        Validaciones post-corrida (ver sección "Sanity checks")
     logger.ts             Logging a consola + archivo en data/logs/
 ```
 
@@ -127,6 +128,33 @@ defecto. Si se agotan los reintentos:
 - en una **descarga**, el documento se marca como fallido en
   `data/logs/failed-<sitio>.json` para reintentarlo después con `--retry-failed`,
   y el scraper continúa con el siguiente documento.
+
+## Sanity checks
+
+Al final de cada corrida (no en `--retry-failed`), el scraper valida automáticamente
+lo que extrajo y lo imprime en consola + lo guarda en
+`data/logs/sanity-check-<sitio>.json`:
+
+1. **Conteo extraído vs. total reportado por el sitio**: compara `records.length`
+   contra el total que el propio paginador de PrimeFaces informa (`"Página X de Y (Z
+   registros)"`). Si la corrida fue acotada con `--max-pages`, el desajuste es
+   esperado y se marca como informativo, no como error.
+2. **Duplicados por ID**: detecta filas repetidas usando el `param_uuid` de la
+   descarga (identificador real y único por documento en el servidor) — **no** el
+   "Número de expediente", porque ese campo puede repetirse legítimamente entre
+   documentos distintos (apelaciones sobre un mismo expediente).
+3. **% de nulos por columna**: para cada columna detectada en el sitio, qué
+   porcentaje de filas la tienen vacía. Útil para notar si el parser se está
+   comiendo una columna por error.
+4. **PDFs reales**: abre cada `.pdf` descargado y confirma que empiece con la firma
+   `%PDF-` (y que no sea un archivo sospechosamente chico) — para detectar el caso de
+   que el servidor haya devuelto una página de error HTML guardada con extensión
+   `.pdf` en vez del documento real.
+
+Los checks están en [`src/lib/sanityChecks.ts`](src/lib/sanityChecks.ts) como
+funciones puras e independientes entre sí, con tests manuales cubriendo los casos
+borde (corrida parcial, expedientes repetidos legítimos vs. duplicados reales, PDFs
+truncados/corruptos).
 
 ## Limitaciones conocidas
 

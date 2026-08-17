@@ -45,7 +45,13 @@ function runTimestamp(): string {
 export async function scrapeAllPages(
   opts: ScrapeOptions,
   logger: Logger
-): Promise<{ records: DocumentRecord[]; session: JsfSession; jsonPath: string }> {
+): Promise<{
+  records: DocumentRecord[];
+  session: JsfSession;
+  jsonPath: string;
+  totalRecordsReported: number | null;
+  partialRun: boolean;
+}> {
   const jsonPath = getRunJsonPath(opts.siteKey);
 
   const session = new JsfSession(opts.url, logger);
@@ -63,7 +69,13 @@ export async function scrapeAllPages(
     logger.warn(
       "No se detectó información de paginación estándar; se asume que todos los resultados están en una sola página."
     );
-    return { records: allRecords, session, jsonPath };
+    return {
+      records: allRecords,
+      session,
+      jsonPath,
+      totalRecordsReported: null,
+      partialRun: false,
+    };
   }
 
   const { totalPages, totalRecords } = first.pagination;
@@ -71,6 +83,7 @@ export async function scrapeAllPages(
     `Total: ${totalRecords} registros en ${totalPages} páginas (${session.rowsPerPage} filas/página).`
   );
 
+  const partialRun = opts.maxPages !== undefined && opts.maxPages < totalPages;
   const lastPage = opts.maxPages !== undefined ? Math.min(opts.maxPages, totalPages) : totalPages;
 
   for (let page = 2; page <= lastPage; page++) {
@@ -91,7 +104,13 @@ export async function scrapeAllPages(
     }
   }
 
-  return { records: allRecords, session, jsonPath };
+  return {
+    records: allRecords,
+    session,
+    jsonPath,
+    totalRecordsReported: totalRecords,
+    partialRun,
+  };
 }
 
 /** Descarga los PDFs asociados a los registros que tengan info de descarga disponible. */
